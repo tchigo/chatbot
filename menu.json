@@ -1,0 +1,65 @@
+{
+    "categories": {
+        "Gourmet Burgers": {
+            "items": ["Campagnia", "Classic", "Vegetarien", "Spécial chef", "Pancetta", "Montagnard"]
+        },
+        "Home-made Burgers": {
+            "items": ["Campagnia", "Classic", "Vegetarien", "Spécial chef", "Pancetta", "Montagnard"]
+        },
+        "Original Burgers": {
+            "items": ["Cheese", "Double cheese", "Chicken", "Fish", "Royal", "Crousty"]
+        },
+        "Cheese Burgers": {
+            "items": ["Cheese", "Double cheese", "Chicken", "Fish", "Royal", "Crousty"]
+        },
+        "Tacos": {
+            "items": ["Tacos M", "Tacos L", "Tacos XL", "Orient", "Tucson", "Savoyard", "Phoenix", "Fondu"]
+        },
+        "Kebab Sandwiches": {
+            "items": ["Sandwich Kebab", "Kebab Simple", "Kebab Berliner", "Kebab Makloub", "Kebab Sultan", "Kebab Tsunamis", "Kebab Barros"]
+        },
+        "Sandwiches": {
+            "items": ["Clássico", "Kebab", "Chef's cutlet", "Mixed", "Berliner", "Stroganov", "Goodiz", "Escalope du chef", "Mixte", "Straganov", "Magistral", "Chivito", "Méditerranéen", "Crudité Poulet", "Crudité Thon"]
+        },
+        "Bowls": {
+            "items": ["Nature", "Klassish", "César", "Donner", "Bowl Vegan", "Bowl Kebab", "Bowl Grillade Mixte", "Bowl Côtelette d'agneau"]
+        },
+        "Pizzas (Tomato Sauce)": {
+            "items": ["Margherita", "Regina", "Végétarienne", "4 Fromages", "Pizza Thon", "Orientale", "Campione"]
+        },
+        "Pizzas (Fresh Cream)": {
+            "items": ["Chévre Miel", "Poulet", "Saumon"]
+        },
+        "Salads": {
+            "items": ["Classic", "Cesar", "Salade CasaGrill", "Salade de Riz", "Salade de Pâtes"]
+        },
+        "Hot-dogs & Paninis": {
+            "items": ["Panini Poulet", "Panini Thon", "Panini 3 Fromages", "Hotdog Classic", "Hotdog Deluxe", "Maxi Hotdog + Frites"]
+        },
+        "Fries & Fried Chicken": {
+            "items": ["Cheese Fries", "Small fries", "Large fries", "Cheddar fries", "Cheddar bacon fries", "Fried potatoes", "6 nuggets", "12 nuggets", "3 tenders", "6 tenders", "3 Wings", "6 Wings"]
+        },
+        "Kids Menu": {
+            "items": ["Hamburger", "Nuggets", "Mini-Tacos", "Kinder Surprise"]
+        },
+        "Meat": {
+            "items": ["Cuisse", "Demi Poulet", "Poulet Entier", "Saucisse de Volaille", "Donuts Poulet Fromage", "Nugget's X4", "Nugget's X8", "Nugget's X12"]
+        },
+        "Accompaniments": {
+            "items": ["Riz Basthai", "Pommes Grenailles", "Pâtes à la Crème", "Haricots Verts", "Ratatouille", "Frites Maison"]
+        },
+        "Desserts": {
+            "items": ["Smoothie", "Milkshake", "Brownie", "Kinder Bueno", "Suede pie", "3 Macaroon", "Tiramisu", "Tarte daim", "Citronnade", "Glace Häagen Dazs 95ml", "Glace GoodiZ", "Fruits de Saison", "Salade de Fruits"]
+        },
+        "Drinks": {
+            "items": [
+                "Still Water", "Sparkling Water", "Mineral Water",
+                "Orange Juice", "Apple Juice", "Cranberry Juice", "Pineapple Juice", "Lemonade",
+                "Coca-Cola", "Pepsi", "Sprite", "Fanta", "7UP", "Coca-Cola Zero", "Fanta Exotic",
+                "Espresso", "Cappuccino", "Latte", "Cold Brew",
+                "Green Tea Jasmine", "Chamomile", "Moroccan Mint", "Matcha",
+                "Beer", "Red Wine", "White Wine", "Mojito", "Margarita"
+            ]
+        }
+    }
+}
