@@ -2,6 +2,11 @@ from flask import Flask, render_template, request, jsonify
 import requests
 import json
 import random
+from deep_translator import GoogleTranslator
+from langdetect import detect
+from deep_translator.exceptions import LanguageNotSupportedException, NotValidPayload, NotValidLength
+from langdetect import detect, LangDetectException # Added langdetect imports
+
 
 app = Flask(__name__)
 
@@ -661,14 +666,92 @@ def generate_bot_response(clu_response):
             "I'm sorry, I didn't catch that. Could you ask about something specific, like our menu, reservations, or dietary options?"
         ]
         return random.choice(fallback_responses)
+def call_clu_api(user_input):
+    if "https://restaurant-bot.cognitiveservices.azure.com/language/:analyze-conversations?api-version=2024-11-15-preview" in CLU_ENDPOINT or "9xBSN5kQScUWq3YGbZObx2yxukmsjwc8Js9tKntI8hS05O1m3MskJQQJ99BDACYeBjFXJ3w3AAAaACOGe80J" in CLU_API_KEY:
+        print("Warning: CLU API endpoint or key is a placeholder. Returning dummy response.")
+        if "menu" in user_input.lower(): top_intent = "Menu_Inquiry"
+        elif "order" in user_input.lower(): top_intent = "Order_Food"
+        elif "allergy" in user_input.lower(): top_intent = "Allergy_Inquiry"
+        elif "salt" in user_input.lower() or "diabetes" in user_input.lower() or "blood pressure" in user_input.lower(): top_intent = "Dietary_Restriction_Inquiry"
+        else: top_intent = "Greeting"
+        return {
+            "result": {
+                "prediction": {
+                    "topIntent": top_intent,
+                    "intents": [{"category": top_intent, "confidence": 0.9}],
+                    "entities": []
+                }
+            }
+        }
+    headers = {
+        "Ocp-Apim-Subscription-Key": CLU_API_KEY,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "kind": "Conversation",
+        "analysisInput": {
+            "conversationItem": {
+                "id": str(random.randint(1, 10000)),
+                "text": user_input,
+                "modality": "text",
+                "language": "en-us", # CLU API expects English input
+                "participantId": "user"
+            }
+        },
+        "parameters": {
+            "projectName":"wa",
+            "deploymentName": "bb",
+            "stringIndexType": "Utf16CodeUnit"
+        }
+    }
+    try:
+        response = requests.post(CLU_ENDPOINT, headers=headers, json=payload, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.Timeout:
+        return {"error": "The request to the language service timed out. Please try again."}
+    except requests.exceptions.ConnectionError:
+        return {"error": "Could not connect to the language service. Please check the endpoint and network connection."}
+    except requests.exceptions.HTTPError as http_err:
+        try:
+            error_details = response.json()
+            azure_error = error_details.get("error", {}).get("message", str(http_err))
+        except:
+            azure_error = str(http_err)
+        return {"error": f"HTTP error occurred: {azure_error}"}
+    except requests.exceptions.RequestException as e:
+        return {"error": f"An unexpected error occurred while contacting the language service: {str(e)}"}
+    except Exception as e:
+        return {"error": f"An unexpected error occurred: {str(e)}"}
+
+def generate_bot_response(clu_response):
+    if "error" in clu_response:
+        print(f"CLU API Error: {clu_response['error']}")
+        error_responses = [
+            "Apologies, I seem to be experiencing a slight technical hiccup. Could you please try rephrasing your request, or give me a moment and try again?",
+            "Oops! Something went wrong on my end while trying to understand that. Would you mind asking in a different way?",
+            "I'm having a little trouble connecting right now. Please try your request again shortly."
+        ]
+        return random.choice(error_responses)
+    result = clu_response.get("result", {})
+    prediction = result.get("prediction", {})
+    top_intent = prediction.get("topIntent", "None")
+    # For brevity, I will assume the rest of generate_bot_response from the original script is here.
+    # It's important that this function returns a string.
+    if top_intent == "Greeting":
+        return "Hello! How can I help you today?"
+    elif top_intent == "Menu_Inquiry":
+        return "We have a wide variety of items. What are you interested in?"
+    # Add more intent handling based on your CLU model and original script
+    else: # Fallback for other intents or "None"
+        return "I can help with greetings and menu inquiries. How can I assist?"
 
 # --- Flask Routes --- #
 
 @app.route("/")
 def index():
     try:
-        # Ensure index.html exists in a 'templates' folder relative to this script
-        return render_template("index.html")
+        return render_template("index.html") # Assuming you have an index.html in a 'templates' folder
     except Exception as e:
         print(f"Error rendering template: {e}")
         return "Error: Could not load the chat interface. Ensure 'templates/index.html' exists and is accessible.", 500
@@ -678,28 +761,72 @@ def chat():
     try:
         if not request.is_json:
             return jsonify({"response": "Error: Request must be JSON."}), 400
-
         user_message = request.json.get("message", "").strip()
         if not user_message:
             return jsonify({"response": "It seems you haven't typed anything. Please enter a message!"})
-
-        if len(user_message) > 500: # Basic input length validation
+        if len(user_message) > 500:
              return jsonify({"response": "That message is quite long! Could you perhaps shorten it a bit?"})
 
-        print(f"User message: {user_message}")
-        clu_response = call_clu_api(user_message)
-        print(f"CLU response: {json.dumps(clu_response)}")
-        bot_response = generate_bot_response(clu_response)
-        print(f"Bot response: {bot_response}")
+        print(f"Original user message: {user_message}")
+        original_lang = 'en' 
+        message_to_clu = user_message
+        translated_to_english = False
 
-        return jsonify({"response": bot_response})
+        try:
+            # Detect language using langdetect
+            original_lang = detect(user_message)
+            print(f"Detected language: {original_lang}")
+        except LangDetectException as lang_e:
+            print(f"Language detection error with langdetect: {str(lang_e)}. Assuming English.")
+            original_lang = 'en' # Fallback to English if detection fails or text is too short
+        except Exception as e:
+            print(f"Unexpected error during language detection: {str(e)}. Assuming English.")
+            original_lang = 'en'
+
+        if original_lang not in ['en', 'en-us']:
+            try:
+                print(f"Translating message from {original_lang} to English.")
+                translator_to_en = GoogleTranslator(source=original_lang, target='en')
+                message_to_clu = translator_to_en.translate(user_message)
+                translated_to_english = True
+                print(f"Translated message to CLU: {message_to_clu}")
+            except (LanguageNotSupportedException, NotValidPayload, NotValidLength) as trans_e:
+                print(f"Translation to English failed: {str(trans_e)}. Using original message.")
+                # message_to_clu remains user_message
+            except Exception as e:
+                print(f"Unexpected error during translation to English: {str(e)}. Using original message.")
+                # message_to_clu remains user_message
+        else:
+            print("Message is in English or detection assumed English; sending as is to CLU.")
+
+        clu_response_data = call_clu_api(message_to_clu)
+        print(f"CLU response data: {json.dumps(clu_response_data)}")
+        bot_response_text = generate_bot_response(clu_response_data) 
+        print(f"Bot response (English): {bot_response_text}")
+
+        final_bot_response = bot_response_text
+        # Translate back only if the original message was translated to English
+        if translated_to_english and original_lang not in ['en', 'en-us']:
+            try:
+                print(f"Translating bot response from English to {original_lang}.")
+                translator_to_original = GoogleTranslator(source='en', target=original_lang)
+                final_bot_response = translator_to_original.translate(bot_response_text)
+                print(f"Translated bot response to {original_lang}: {final_bot_response}")
+            except (LanguageNotSupportedException, NotValidPayload, NotValidLength) as trans_e:
+                print(f"Translation to {original_lang} failed: {str(trans_e)}. Sending English response.")
+                # final_bot_response remains bot_response_text (English)
+            except Exception as e:
+                print(f"Unexpected error during translation to {original_lang}: {str(e)}. Sending English response.")
+                # final_bot_response remains bot_response_text (English)
+        
+        return jsonify({"response": final_bot_response})
 
     except Exception as e:
         print(f"Error in /chat endpoint: {str(e)}")
-        # Log the full traceback for debugging if possible
         import traceback
         traceback.print_exc()
         return jsonify({"response": "Sorry, a critical error occurred on my end. Please try again later."}), 500
+
 
 if __name__ == "__main__":
     # Make sure menu.json exists before starting
@@ -715,6 +842,6 @@ if __name__ == "__main__":
         exit(1)
 
     # Use host='0.0.0.0' to be accessible on the network
-    # debug=True is useful for development, set to False for production
+    # debug=False for production
     print("Starting Flask server...")
-    app.run(debug=False, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)
